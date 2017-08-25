@@ -11,13 +11,20 @@ import com.MAVLink.MAVLinkPacket;
 public class RacelinkService extends Service {
     private static final String TAG = RacelinkService.class.getSimpleName();
 
-    //private static RacelinkConnection mRacelinkConnection
     private RacelinkServiceApi mRacelinkApi = new RacelinkServiceApi(this);
     private BluetoothConnection mConnection;
 
     private String mBTAddress;
 
     public RacelinkService() {
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(mConnection != null) {
+            mConnection.disconnect();
+        }
     }
 
     @Override
@@ -36,6 +43,12 @@ public class RacelinkService extends Service {
         }
     }
 
+    private void disconnectFromVTS() {
+        if(mConnection != null) {
+            mConnection.disconnect();
+        }
+    }
+
     private void setBTAddress (String address) {
         mBTAddress = address;
     }
@@ -50,6 +63,7 @@ public class RacelinkService extends Service {
 
         public void sendData(MAVLinkPacket packet) {
             if(mService == null) return;
+            mService.mConnection.sendRacelinkPacket(packet);
         }
 
         public void startConnection() {
@@ -58,10 +72,23 @@ public class RacelinkService extends Service {
             }
         }
 
+        public void disconnect() {
+            if(mService != null) {
+                mService.disconnectFromVTS();
+            }
+        }
+
         public void setBTaddress(String address) {
             if(mService != null)
                 mService.setBTAddress(address);
         }
 
+
+        public int getConnectionStatus() {
+            if(mService != null && mService.mConnection != null) {
+                return mService.mConnection.getConnectionStatus();
+            }
+            return RacelinkConnection.RACELINK_DISCONNECTED;
+        }
     }
 }

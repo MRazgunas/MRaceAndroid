@@ -8,12 +8,13 @@ package com.MAVLink.Messages;
 
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.common.msg_radio_status;
+import java.io.Serializable;
 
 /**
  * Storage for MAVLink Packet and Error statistics
  * 
  */
-public class MAVLinkStats /* implements Serializable */{
+public class MAVLinkStats  implements Serializable {
 
     public int receivedPacketCount; // total recieved packet count for all sources
 

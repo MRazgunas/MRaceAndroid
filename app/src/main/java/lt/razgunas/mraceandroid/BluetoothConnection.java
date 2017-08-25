@@ -31,7 +31,6 @@ public class BluetoothConnection extends RacelinkConnection {
     private static final String UUID_BT = "00001101-0000-1000-8000-00805F9B34FB";
 
     private BluetoothAdapter mBluetoothAdapter;
-    private Context mContext;
 
     private BluetoothSocket mBluetoothSocket;
 
@@ -41,25 +40,6 @@ public class BluetoothConnection extends RacelinkConnection {
     public BluetoothConnection(Context context) {
         mContext = context;
     }
-
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if(action.equals(mBluetoothAdapter.ACTION_STATE_CHANGED)) {
-                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, mBluetoothAdapter.ERROR);
-                switch(state) {
-                    case BluetoothAdapter.STATE_OFF:
-                        Log.i(TAG, "Bluetooth is off");
-                        break;
-                    case BluetoothAdapter.STATE_ON:
-                        Log.i(TAG, "Bluetooth turned on");
-                        //startDiscovery();
-                        break;
-                }
-            }
-        }
-    };
 
     @Override
     protected void openConnection() throws IOException{
@@ -71,15 +51,13 @@ public class BluetoothConnection extends RacelinkConnection {
 
         device = mBluetoothAdapter.getRemoteDevice(btAddress);
         if(device == null) {
-            Toast.makeText(mContext, "Bluetooth device not avaliable", Toast.LENGTH_LONG);
+            Toast.makeText(mContext, "Bluetooth device not avaliable", Toast.LENGTH_LONG).show();
         }
 
         mBluetoothSocket = device.createInsecureRfcommSocketToServiceRecord(UUID.fromString(UUID_BT));
         mBluetoothSocket.connect();
         out = mBluetoothSocket.getOutputStream();
         in = mBluetoothSocket.getInputStream();
-
-        onConnectionOpened();
     }
 
     @Override
@@ -89,12 +67,20 @@ public class BluetoothConnection extends RacelinkConnection {
 
     @Override
     protected void sendBuffer(byte[] buffer) throws IOException {
-
+        if(out != null) {
+            out.write(buffer);
+        }
     }
 
     @Override
-    protected void closeConnection() {
-        mContext.unregisterReceiver(mReceiver);
+    protected void closeConnection() throws IOException {
+        if(in != null) {
+            in.close();
+        }
+
+        if(out != null) {
+            out.close();
+        }
     }
 
     @Override

@@ -9,13 +9,55 @@
     tools:showIn="@layout/activity_main">
 
     <Button
-        android:id="@+id/btnConnectVts"
+        android:id="@+id/btnStartRace"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Start Race"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp" />
+
+    <TextView
+        android:id="@+id/txtTimer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="-23dp"
+        android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
-        android:text="Button"
+        android:text="Race timer: 00:00"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        app:layout_constraintLeft_toLeftOf="@+id/btnStartRace"
+        app:layout_constraintTop_toBottomOf="@+id/btnStartRace"
+        android:layout_marginStart="8dp" />
+
+    <ListView
+        android:id="@+id/lvLapTimes"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Connect to VTS" />
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="8dp"
+        android:text="Lap times"
+        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+        app:layout_constraintLeft_toLeftOf="@+id/txtTimer"
+        app:layout_constraintTop_toBottomOf="@+id/txtTimer" />
+
 </android.support.constraint.ConstraintLayout>

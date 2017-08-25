@@ -6,9 +6,10 @@
 
 package com.MAVLink.Messages;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 
-public class MAVLinkPayload {
+public class MAVLinkPayload implements Serializable {
 
     private static final byte UNSIGNED_BYTE_MIN_VALUE = 0;
     private static final short UNSIGNED_BYTE_MAX_VALUE = Byte.MAX_VALUE - Byte.MIN_VALUE;
