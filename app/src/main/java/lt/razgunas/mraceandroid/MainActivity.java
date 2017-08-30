@@ -37,6 +37,8 @@ import android.widget.Toast;
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.common.msg_command_long;
+import com.MAVLink.common.msg_param_request_list;
+import com.MAVLink.common.msg_param_value;
 import com.MAVLink.common.msg_racer_lap;
 import com.MAVLink.common.msg_racer_pass;
 import com.MAVLink.common.msg_vrx_status;
@@ -51,6 +53,7 @@ import lt.razgunas.mraceandroid.RacelinkService.RacelinkServiceApi;
 import lt.razgunas.mraceandroid.AppState;
 
 import static com.MAVLink.common.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
+import static com.MAVLink.common.msg_param_value.MAVLINK_MSG_ID_PARAM_VALUE;
 import static com.MAVLink.common.msg_racer_lap.MAVLINK_MSG_ID_RACER_LAP;
 import static com.MAVLink.common.msg_racer_pass.MAVLINK_MSG_ID_RACER_PASS;
 import static com.MAVLink.common.msg_vrx_status.MAVLINK_MSG_ID_VRX_STATUS;
@@ -128,6 +131,10 @@ public class MainActivity extends AppCompatActivity{
                             msg_vrx_status status = (msg_vrx_status) packet;
                             rssiView.setText(Integer.toString(status.rssi));
                             break;
+                        case MAVLINK_MSG_ID_PARAM_VALUE:
+                            msg_param_value value = (msg_param_value) packet;
+                            ParamValue param = new ParamValue(value.getParam_Id(), value.param_index, value.param_value, value.param_type);
+                            AppState.getInstance().updateParameter(param);
                     }
                     break;
                 case RacelinkConnection.BROADCAST_RACELINK_CONN_STATUS:
@@ -139,10 +146,13 @@ public class MainActivity extends AppCompatActivity{
                         case RacelinkConnection.RACELINK_CONNECTED:
                             mMenu.findItem(R.id.action_connect).setTitle("Disconnect");
                             Toast.makeText(context, "Connected", Toast.LENGTH_LONG).show();
+                            msg_param_request_list req_param = new msg_param_request_list();
+                            mRaceLink.sendData(req_param.pack());
                             break;
                         case RacelinkConnection.RACELINK_DISCONNECTED:
                             Toast.makeText(context, "Disconnected", Toast.LENGTH_LONG).show();
                             mMenu.findItem(R.id.action_connect).setTitle("Connect");
+                            AppState.getInstance().textSpeaker.speak("Disconnected");
                             break;
                     }
                     break;
@@ -313,6 +323,11 @@ public class MainActivity extends AppCompatActivity{
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
+        }
+
+        if(id == R.id.open_param) {
+            Intent intent = new Intent(this, ParametersActivity.class);
+            startActivity(intent);
         }
 
         if(id == R.id.action_connect) {

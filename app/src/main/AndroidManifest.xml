@@ -43,6 +43,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="lt.razgunas.mraceandroid.MainActivity" />
         </activity>
+        <activity
+            android:name=".ParametersActivity"
+            android:label="@string/title_activity_parameters"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="lt.razgunas.mraceandroid.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

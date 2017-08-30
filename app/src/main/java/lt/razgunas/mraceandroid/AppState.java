@@ -5,6 +5,9 @@ import android.media.ToneGenerator;
 import android.speech.tts.TextToSpeech;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class AppState {
@@ -23,11 +26,16 @@ public class AppState {
 
     private ArrayList<LapResult> raceResults;
 
+    private ArrayList<ParamValue> parameters;
+
+    private ConcurrentHashMap<String, ParamUpdateInterface> paramUpdateListeners = new ConcurrentHashMap<>();
+
     private boolean isRaceStarted = false;
 
     private AppState() {
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME);
         raceResults = new ArrayList<LapResult>();
+        parameters = new ArrayList<ParamValue>();
     }
 
     public void notifyLapPassed(LapResult lap) {
@@ -62,5 +70,63 @@ public class AppState {
 
     public void setRaceStarted(boolean raceStarted) {
         isRaceStarted = raceStarted;
+    }
+
+    public ArrayList<ParamValue> getAllParams() {
+        return parameters;
+    }
+
+    public void addParameter(ParamValue param) {
+        parameters.add(param);
+        notifyParamChanged();
+    }
+
+    public ParamValue getParameter(String name) {
+        for(ParamValue p: parameters) {
+            if(p.getParamName() == name) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    public ParamValue getParameter(int index) {
+        for(ParamValue p: parameters) {
+            if(p.getParamIndex() == index)
+                return p;
+        }
+        return null;
+    }
+
+    public void updateParameter(ParamValue param) {
+        for(int i = 0; i < parameters.size(); i++) {
+            if(parameters.get(i).getParamName().equals(param.getParamName())) {
+
+                param.setParamIndex(parameters.get(i).getParamIndex());
+                parameters.set(i, param);
+                notifyParamChanged();
+                return;
+            }
+        }
+        parameters.add(param);
+        notifyParamChanged();
+    }
+
+    public void notifyParamChanged() {
+        for(ParamUpdateInterface p: paramUpdateListeners.values()) {
+            p.paramListUpdated();
+        }
+    }
+
+    public void registerParamListener(String key, ParamUpdateInterface i) {
+        paramUpdateListeners.put(key, i);
+    }
+
+    public void unregisterParamListener(String key) {
+        paramUpdateListeners.remove(key);
+    }
+
+    public interface ParamUpdateInterface {
+        void paramListUpdated();
     }
 }
