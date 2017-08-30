@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Connection settings"
+        android:key="conn_settings">
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/connection_types"
+            android:entryValues="@array/connection_type_values"
+            android:key="connection_type"
+            android:title="Connection type" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Race settings"
+        android:key="race_settings">
+
+        <EditTextPreference
+            android:defaultValue="30"
+            android:key="race_pre_start_time"
+            android:numeric="integer"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:summary="Race preparation time is %s seconds"
+            android:title="Race preperation time" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

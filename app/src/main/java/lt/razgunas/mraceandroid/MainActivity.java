@@ -14,6 +14,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.IBinder;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -24,6 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.Chronometer;
@@ -36,6 +39,7 @@ import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.common.msg_command_long;
 import com.MAVLink.common.msg_racer_lap;
 import com.MAVLink.common.msg_racer_pass;
+import com.MAVLink.common.msg_vrx_status;
 import com.MAVLink.enums.VTS_CMD;
 
 import java.util.ArrayList;
@@ -49,6 +53,7 @@ import lt.razgunas.mraceandroid.AppState;
 import static com.MAVLink.common.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
 import static com.MAVLink.common.msg_racer_lap.MAVLINK_MSG_ID_RACER_LAP;
 import static com.MAVLink.common.msg_racer_pass.MAVLINK_MSG_ID_RACER_PASS;
+import static com.MAVLink.common.msg_vrx_status.MAVLINK_MSG_ID_VRX_STATUS;
 
 public class MainActivity extends AppCompatActivity{
 
@@ -69,6 +74,7 @@ public class MainActivity extends AppCompatActivity{
 
     private Menu mMenu;
     private Button startRaceBtn;
+    private TextView rssiView;
 
     private ServiceConnection raclinkConnection = new ServiceConnection() {
         @Override
@@ -117,6 +123,11 @@ public class MainActivity extends AppCompatActivity{
                             LapResult lapTime = new LapResult((int) lap.lap_time_ms);
                             AppState.getInstance().notifyLapPassed(lapTime);
                             mLapsResulsListAdapter.notifyDataSetChanged();
+                            break;
+                        case MAVLINK_MSG_ID_VRX_STATUS:
+                            msg_vrx_status status = (msg_vrx_status) packet;
+                            rssiView.setText(Integer.toString(status.rssi));
+                            break;
                     }
                     break;
                 case RacelinkConnection.BROADCAST_RACELINK_CONN_STATUS:
@@ -159,9 +170,13 @@ public class MainActivity extends AppCompatActivity{
 
         AppState.getInstance().textSpeaker = new TextSpeaker(getApplicationContext());
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         mLapsResulsListAdapter = new LapsResulsListAdapter(this, R.layout.laps_list, AppState.getInstance().getAllLaps());
         ListView lapsView = (ListView) findViewById(R.id.lvLapTimes);
         lapsView.setAdapter(mLapsResulsListAdapter);
+
+        rssiView = (TextView) findViewById(R.id.txtRssi);
 
         startRaceBtn = (Button) findViewById(R.id.btnStartRace);
         startRaceBtn.setOnClickListener(new View.OnClickListener() {
@@ -179,42 +194,44 @@ public class MainActivity extends AppCompatActivity{
         });
     }
 
-    private CountDownTimer mCountDownTimer = new CountDownTimer(30000, 1000) {
-        @Override
-        public void onTick(long l) {
-            TextView v = (TextView) findViewById(R.id.txtTimer);
-            long m = (long) Math.floor(l/1000/60);
-            long s = (long) Math.floor(l/1000) - m*60;
-            String time = String.format("-%02d:%02d", m, s);
-            v.setText("Race timer: " + time);
-
-            if(m == 0 && s == 5) {
-                AppState.getInstance().textSpeaker.speak("Race starting in 5 seconds");
-            }
-
-            if(m == 0 && s < 3) {
-                AppState.getInstance().playTone(AppState.TONE_PREPARE, AppState.PREPARE_DURATION);
-            }
-        }
-
-        @Override
-        public void onFinish() {
-            AppState.getInstance().playTone(AppState.TONE_GO, AppState.GO_DURATION);
-            AppState.getInstance().setRaceStarted(true);
-        }
-    };
-
+    private CountDownTimer mCountDownTimer;
 
     private void startRace() {
         if(mRaceLink.getConnectionStatus() == RacelinkConnection.RACELINK_CONNECTED) {
-            AppState.getInstance().textSpeaker.speak("Starting race in 30 seconds");
+            int racePreStart = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString("race_pre_start_time", "30"));
+            if(racePreStart < 5) racePreStart = 5;
+            AppState.getInstance().textSpeaker.speak(String.format("Starting race in %d seconds", racePreStart));
             AppState.getInstance().resetRace();
             mLapsResulsListAdapter.notifyDataSetChanged();
             msg_command_long command = new msg_command_long();
             command.command = VTS_CMD.VTS_CMD_START_RACE_COUNTDOWN;
-            command.param1 = 30;
+            command.param1 = racePreStart;
             command.param2 = 0f;
             mRaceLink.sendData(command.pack());
+            mCountDownTimer = new CountDownTimer(racePreStart * 1000, 1000) {
+                @Override
+                public void onTick(long l) {
+                    TextView v = (TextView) findViewById(R.id.txtTimer);
+                    long m = (long) Math.floor(l/1000/60);
+                    long s = (long) Math.floor(l/1000) - m*60;
+                    String time = String.format("-%02d:%02d", m, s);
+                    v.setText("Race timer: " + time);
+
+                    if(m == 0 && s == 5) {
+                        AppState.getInstance().textSpeaker.speak("Race starting in 5 seconds");
+                    }
+
+                    if(m == 0 && s < 3) {
+                        AppState.getInstance().playTone(AppState.TONE_PREPARE, AppState.PREPARE_DURATION);
+                    }
+                }
+
+                @Override
+                public void onFinish() {
+                    AppState.getInstance().playTone(AppState.TONE_GO, AppState.GO_DURATION);
+                    AppState.getInstance().setRaceStarted(true);
+                }
+            };
             mCountDownTimer.start();
         } else {
             Toast.makeText(this, "Not connected to timing", Toast.LENGTH_LONG).show();
